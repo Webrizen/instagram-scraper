@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Instagram Web Scrapper - Crafted With ❤️ By Arshahdul Ahmed</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body>
+    <div class="mx-auto py-10 max-w-2xl">
+      <h1 class="text-3xl font-semibold mb-5">Instagram Profile Scraper</h1>
+      <div
+        class="bg-white py-4 px-2 shadow-lg rounded-lg flex flex-row items-center gap-2"
+      >
+        <span
+          contenteditable
+          id="profileUrl"
+          class="w-full border rounded p-2 focus:outline-none focus:border-blue-500"
+        ></span>
+        <button
+          onclick="StartFetching()"
+          class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-full focus:outline-none"
+        >
+          Scrape
+        </button>
+      </div>
+      <div id="resultContainer" class="mt-8">
+        <div class="flex flex-row justify-between items-center py-4 px-2">
+          <h2 class="text-2xl font-semibold mb-3">Scraped Data</h2>
+          <button onclick="ExportToExcel('xlsx')" type="button" class="inline-flex items-center px-4 py-2 font-semibold leading-6 text-sm shadow rounded-md bg-blue-500 text-white transition ease-in-out duration-150 ring-1 ring-slate-900/10 dark:ring-slate-200/20">
+            Download
+          </button>
+        </div>
+        <table id="tbl_exporttable_to_xls" class="table-auto w-full border-collapse border border-gray-300">
+          <thead class="text-center">
+            <tr>
+              <th class="border border-gray-300 px-4 py-2">Post URL</th>
+              <th class="border border-gray-300 px-4 py-2">No. of Likes</th>
+              <th class="border border-gray-300 px-4 py-2">No. of Comments</th>
+            </tr>
+          </thead>
+          <tbody id="dataBody" class="text-center"></tbody>
+        </table>
+      </div>
+    </div>
+    <script type="text/javascript" src="https://unpkg.com/xlsx@0.15.1/dist/xlsx.full.min.js"></script>
+    <script>
+      function extractUsernameFromUrl(url) {
+        const parts = url.split("/");
+        const username = parts[parts.length - 1];
+        return username;
+      }
+      async function StartFetching() {
+        const inputUrl = document.getElementById("profileUrl").innerText;
+        const username = extractUsernameFromUrl(inputUrl);
+        const url = `https://instagram-bulk-profile-scrapper.p.rapidapi.com/clients/api/ig/ig_profile?ig=${username}&response_type=feeds`;
+        const options = {
+          method: "GET",
+          headers: {
+            "X-RapidAPI-Key":
+              "dc1f0b6d11msh82c3995f523d579p1d3e58jsn17975653f83b",
+            "X-RapidAPI-Host": "instagram-bulk-profile-scrapper.p.rapidapi.com",
+          },
+        };
+
+        try {
+          const response = await fetch(url, options);
+          const result = await response.json();
+          // Extract and display the posts data
+          const posts = result[0].feed.data;
+          const dataBody = document.getElementById("dataBody");
+          dataBody.innerHTML = ""; // Clear previous data
+
+          posts.forEach((post) => {
+            const row = document.createElement("tr");
+            const postUrlCell = document.createElement("td");
+            const likesCell = document.createElement("td");
+            const commentsCell = document.createElement("td");
+
+            const postUrlLink = document.createElement("a");
+            postUrlLink.href = `https://www.instagram.com/p/${post.code}`;
+            postUrlLink.textContent = `View Post`;
+            postUrlCell.appendChild(postUrlLink);
+
+            likesCell.textContent = post.like_count;
+            commentsCell.textContent = post.comment_count;
+
+            row.appendChild(postUrlCell);
+            row.appendChild(likesCell);
+            row.appendChild(commentsCell);
+
+            dataBody.appendChild(row);
+          });
+        } catch (error) {
+          alert(error);
+        }
+      }
+      function ExportToExcel(type, fn, dl) {
+       var elt = document.getElementById('tbl_exporttable_to_xls');
+       var wb = XLSX.utils.table_to_book(elt, { sheet: "sheet1" });
+       return dl ?
+         XLSX.write(wb, { bookType: type, bookSST: true, type: 'base64' }):
+         XLSX.writeFile(wb, fn || ('MySheetName.' + (type || 'xlsx')));
+    }
+    </script>
+  </body>
+</html>
