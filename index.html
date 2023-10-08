@@ -3,12 +3,31 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Instagram Web Scrapper - Crafted With ❤️ By Arshahdul Ahmed</title>
+    <title>Instagram Web Analyzer - Crafted With ❤️ By Arshahdul Ahmed</title>
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,900;1,100;1,200;1,300;1,400;1,500;1,700;1,800;1,900&display=swap"
+      rel="stylesheet"
+    />
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      * {
+        font-family: "Poppins", sans-serif;
+      }
+    </style>
   </head>
   <body>
     <div class="mx-auto py-10 max-w-2xl">
-      <h1 class="text-3xl font-semibold mb-5">Instagram Profile Scraper</h1>
+      <div class="flex flex-row gap-4 items-center mb-5">
+        <img
+          src="/favicon.ico"
+          alt="Instagram Profile Analyzer"
+          class="w-10 h-10"
+        />
+        <h1 class="text-3xl font-semibold">Instagram Profile Analyzer</h1>
+      </div>
       <div
         class="bg-white py-4 px-2 shadow-lg rounded-lg flex flex-row items-center gap-2"
       >
@@ -21,17 +40,24 @@
           onclick="StartFetching()"
           class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-full focus:outline-none"
         >
-          Scrape
+          Analyze
         </button>
       </div>
       <div id="resultContainer" class="mt-8">
         <div class="flex flex-row justify-between items-center py-4 px-2">
-          <h2 class="text-2xl font-semibold mb-3">Scraped Data</h2>
-          <button onclick="ExportToExcel('xlsx')" type="button" class="inline-flex items-center px-4 py-2 font-semibold leading-6 text-sm shadow rounded-md bg-blue-500 text-white transition ease-in-out duration-150 ring-1 ring-slate-900/10 dark:ring-slate-200/20">
+          <h2 class="text-2xl font-semibold mb-3">Analyzed Data</h2>
+          <button
+            onclick="ExportToExcel('xlsx')"
+            type="button"
+            class="inline-flex items-center px-4 py-2 font-semibold leading-6 text-sm shadow rounded-md bg-blue-500 text-white transition ease-in-out duration-150 ring-1 ring-slate-900/10 dark:ring-slate-200/20"
+          >
             Download
           </button>
         </div>
-        <table id="tbl_exporttable_to_xls" class="table-auto w-full border-collapse border border-gray-300">
+        <table
+          id="tbl_exporttable_to_xls"
+          class="table-auto w-full border-collapse border border-gray-300"
+        >
           <thead class="text-center">
             <tr>
               <th class="border border-gray-300 px-4 py-2">Post URL</th>
@@ -43,7 +69,10 @@
         </table>
       </div>
     </div>
-    <script type="text/javascript" src="https://unpkg.com/xlsx@0.15.1/dist/xlsx.full.min.js"></script>
+    <script
+      type="text/javascript"
+      src="https://unpkg.com/xlsx@0.15.1/dist/xlsx.full.min.js"
+    ></script>
     <script>
       function extractUsernameFromUrl(url) {
         const parts = url.split("/");
@@ -51,57 +80,72 @@
         return username;
       }
       async function StartFetching() {
-        const inputUrl = document.getElementById("profileUrl").innerText;
-        const username = extractUsernameFromUrl(inputUrl);
-        const url = `https://instagram-bulk-profile-scrapper.p.rapidapi.com/clients/api/ig/ig_profile?ig=${username}&response_type=feeds`;
-        const options = {
-          method: "GET",
-          headers: {
-            "X-RapidAPI-Key":
-              "dc1f0b6d11msh82c3995f523d579p1d3e58jsn17975653f83b",
-            "X-RapidAPI-Host": "instagram-bulk-profile-scrapper.p.rapidapi.com",
-          },
-        };
+  const inputUrl = document.getElementById("profileUrl").innerText;
+  const username = extractUsernameFromUrl(inputUrl);
+  const url = `https://instagram-bulk-scraper-latest.p.rapidapi.com/webget_user_info/${username}`;
+  const options = {
+    method: "GET",
+    headers: {
+      "X-RapidAPI-Key": "dc1f0b6d11msh82c3995f523d579p1d3e58jsn17975653f83b",
+      "X-RapidAPI-Host": "instagram-bulk-scraper-latest.p.rapidapi.com",
+    },
+  };
 
-        try {
-          const response = await fetch(url, options);
-          const result = await response.json();
-          // Extract and display the posts data
-          const posts = result[0].feed.data;
-          const dataBody = document.getElementById("dataBody");
-          dataBody.innerHTML = ""; // Clear previous data
+  try {
+    let hasMorePosts = true;
+    let endCursor = null;
+    const dataBody = document.getElementById("dataBody");
+    dataBody.innerHTML = ""; // Clear existing data
 
-          posts.forEach((post) => {
-            const row = document.createElement("tr");
-            const postUrlCell = document.createElement("td");
-            const likesCell = document.createElement("td");
-            const commentsCell = document.createElement("td");
+    while (hasMorePosts) {
+      // Include the endCursor in the URL for pagination
+      const paginationUrl = endCursor
+        ? `${url}?end_cursor=${endCursor}`
+        : url;
 
-            const postUrlLink = document.createElement("a");
-            postUrlLink.href = `https://www.instagram.com/p/${post.code}`;
-            postUrlLink.textContent = `https://www.instagram.com/p/${post.code}`;
-            postUrlCell.appendChild(postUrlLink);
+      const response = await fetch(paginationUrl, options);
+      const result = await response.json();
 
-            likesCell.textContent = post.like_count;
-            commentsCell.textContent = post.comment_count;
+      // Extract and display post data
+      const posts = result.data.edge_owner_to_timeline_media.edges;
 
-            row.appendChild(postUrlCell);
-            row.appendChild(likesCell);
-            row.appendChild(commentsCell);
+      posts.forEach((post) => {
+        const postUrl = `https://www.instagram.com/p/${post.node.shortcode}/`;
+        const likes = post.node.edge_liked_by.count;
+        const comments = post.node.edge_media_to_comment.count;
 
-            dataBody.appendChild(row);
-          });
-        } catch (error) {
-          alert(error);
-        }
+        // Create table rows for each post
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td class="border border-gray-300 px-4 py-2">
+            <a href="${postUrl}" target="_blank">${postUrl}</a>
+          </td>
+          <td class="border border-gray-300 px-4 py-2">${likes}</td>
+          <td class="border border-gray-300 px-4 py-2">${comments}</td>
+        `;
+
+        dataBody.appendChild(row);
+      });
+
+      // Check for pagination
+      if (result.data.edge_owner_to_timeline_media.page_info.has_next_page) {
+        endCursor = result.data.edge_owner_to_timeline_media.page_info.end_cursor;
+      } else {
+        hasMorePosts = false;
       }
-      function ExportToExcel(type, fn, dl) {
-       var elt = document.getElementById('tbl_exporttable_to_xls');
-       var wb = XLSX.utils.table_to_book(elt, { sheet: "sheet1" });
-       return dl ?
-         XLSX.write(wb, { bookType: type, bookSST: true, type: 'base64' }):
-         XLSX.writeFile(wb, fn || ('MySheetName.' + (type || 'xlsx')));
     }
+  } catch (error) {
+    alert(error);
+  }
+}
+
+      function ExportToExcel(type, fn, dl) {
+        var elt = document.getElementById("tbl_exporttable_to_xls");
+        var wb = XLSX.utils.table_to_book(elt, { sheet: "sheet1" });
+        return dl
+          ? XLSX.write(wb, { bookType: type, bookSST: true, type: "base64" })
+          : XLSX.writeFile(wb, fn || "MySheetName." + (type || "xlsx"));
+      }
     </script>
   </body>
 </html>
