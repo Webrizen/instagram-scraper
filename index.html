@@ -18,7 +18,7 @@
       }
     </style>
   </head>
-  <body>
+  <body class="min-h-screen w-full">
     <div class="mx-auto py-10 max-w-2xl">
       <div class="flex flex-row gap-4 items-center mb-5">
         <img
@@ -34,11 +34,12 @@
         <span
           contenteditable
           id="profileUrl"
-          class="w-full border rounded p-2 focus:outline-none focus:border-blue-500"
+          class="w-full border rounded-full py-2 px-3 focus:outline-none focus:border-blue-500"
         ></span>
         <button
           onclick="StartFetching()"
           class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-full focus:outline-none"
+          id="StrBTN"
         >
           Analyze
         </button>
@@ -80,43 +81,46 @@
         return username;
       }
       async function StartFetching() {
-  const inputUrl = document.getElementById("profileUrl").innerText;
-  const username = extractUsernameFromUrl(inputUrl);
-  const url = `https://instagram-bulk-scraper-latest.p.rapidapi.com/webget_user_info/${username}`;
-  const options = {
-    method: "GET",
-    headers: {
-      "X-RapidAPI-Key": "a0b8e5d548msh5a154a82bddf486p1b6a50jsnf94fa19d455d",
-      "X-RapidAPI-Host": "instagram-bulk-scraper-latest.p.rapidapi.com",
-    },
-  };
+        const inputUrl = document.getElementById("profileUrl").innerText;
+        const info = document.getElementById("StrBTN");
+        info.innerHTML="Analyzing..."
+        const username = extractUsernameFromUrl(inputUrl);
+        const url = `https://instagram-bulk-scraper-latest.p.rapidapi.com/webget_user_info/${username}`;
+        const options = {
+          method: "GET",
+          headers: {
+            "X-RapidAPI-Key":
+              "9f5f308669msh43e5c1a54d57baep114773jsn52ab35ad22b6",
+            "X-RapidAPI-Host": "instagram-bulk-scraper-latest.p.rapidapi.com",
+          },
+        };
 
-  try {
-    let hasMorePosts = true;
-    let endCursor = null;
-    const dataBody = document.getElementById("dataBody");
-    dataBody.innerHTML = ""; // Clear existing data
+        try {
+          let hasMorePosts = true;
+          let endCursor = null;
+          const dataBody = document.getElementById("dataBody");
+          dataBody.innerHTML = ""; // Clear existing data
 
-    while (hasMorePosts) {
-      // Include the endCursor in the URL for pagination
-      const paginationUrl = endCursor
-        ? `${url}?end_cursor=${endCursor}`
-        : url;
+          while (hasMorePosts) {
+            // Include the endCursor in the URL for pagination
+            const paginationUrl = endCursor
+              ? `${url}?end_cursor=${endCursor}`
+              : url;
 
-      const response = await fetch(paginationUrl, options);
-      const result = await response.json();
+            const response = await fetch(paginationUrl, options);
+            const result = await response.json();
 
-      // Extract and display post data
-      const posts = result.data.edge_owner_to_timeline_media.edges;
+            // Extract and display post data
+            const posts = result.data.edge_owner_to_timeline_media.edges;
 
-      posts.forEach((post) => {
-        const postUrl = `https://www.instagram.com/p/${post.node.shortcode}/`;
-        const likes = post.node.edge_liked_by.count;
-        const comments = post.node.edge_media_to_comment.count;
+            posts.forEach((post) => {
+              const postUrl = `https://www.instagram.com/p/${post.node.shortcode}/`;
+              const likes = post.node.edge_liked_by.count;
+              const comments = post.node.edge_media_to_comment.count;
 
-        // Create table rows for each post
-        const row = document.createElement("tr");
-        row.innerHTML = `
+              // Create table rows for each post
+              const row = document.createElement("tr");
+              row.innerHTML = `
           <td class="border border-gray-300 px-4 py-2">
             <a href="${postUrl}" target="_blank">${postUrl}</a>
           </td>
@@ -124,20 +128,24 @@
           <td class="border border-gray-300 px-4 py-2">${comments}</td>
         `;
 
-        dataBody.appendChild(row);
-      });
+              dataBody.appendChild(row);
+            });
 
-      // Check for pagination
-      if (result.data.edge_owner_to_timeline_media.page_info.has_next_page) {
-        endCursor = result.data.edge_owner_to_timeline_media.page_info.end_cursor;
-      } else {
-        hasMorePosts = false;
+            // Check for pagination
+            if (
+              result.data.edge_owner_to_timeline_media.page_info.has_next_page
+            ) {
+              endCursor =
+                result.data.edge_owner_to_timeline_media.page_info.end_cursor;
+            } else {
+              hasMorePosts = false;
+            }
+          }
+        } catch (error) {
+          info.innerHTML="Analyze"
+          alert(error);
+        }
       }
-    }
-  } catch (error) {
-    alert(error);
-  }
-}
 
       function ExportToExcel(type, fn, dl) {
         var elt = document.getElementById("tbl_exporttable_to_xls");
